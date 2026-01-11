@@ -4,6 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_score
 
 
+
+
 # just looking at time series and prehistoric data
 
 sp500 = yf.Ticker("^GSPC")
@@ -29,9 +31,6 @@ sp500["Target"] = (sp500["Tomorrow"] > sp500["Close"]).astype(int)
 # remove data thats from too long ago 
 # only take from 1990 onwards
 sp500 = sp500.loc["1990-01-01":].copy()
-
-
-
 
 model = RandomForestClassifier(n_estimators=100, min_samples_split=100, random_state=1)
 
@@ -116,7 +115,7 @@ print(sp500)
 sp500 = sp500.dropna()
 print(sp500)
 
-# improving model
+# improving model and prediction to ensure greater accuracy
 
 model = RandomForestClassifier(n_estimators=200, min_samples_split=50, random_state=1)
 
