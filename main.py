@@ -7,15 +7,16 @@ from sklearn.metrics import precision_score
 
 
 # just looking at time series and prehistoric data
+# sp500 = yf.download("^GSPC", period="10y")
+sp500 = yf.Ticker("^GSPC").history(period="10y")
 
-sp500 = yf.Ticker("^GSPC")
-
-sp500 =  sp500.history(period="max")
+# sp500 = yf.Ticker("^GSPC")
+# sp500 =  sp500.history(period="10y")
 
 print("SP500")
 print(sp500)
 
-sp500.index
+print(sp500.index)
 
 sp500.plot.line(y='Close', use_index=True)
 
@@ -25,12 +26,19 @@ del sp500["Stock Splits"]
 
 
 # setup target using ML
-sp500["Tomorrow"] = sp500['Close'].shift(-1)
+sp500["Tomorrow"] = sp500["Close"].shift(-1)
 
+print(sp500)
+# print(sp500["Tomorrow"].index)
+# print(sp500["Close"].index)
+sp500 = sp500.dropna(subset=["Tomorrow"])
 sp500["Target"] = (sp500["Tomorrow"] > sp500["Close"]).astype(int)
+
+print(sp500)
+
 # remove data thats from too long ago 
 # only take from 1990 onwards
-sp500 = sp500.loc["1990-01-01":].copy()
+# sp500 = sp500.loc["1990-01-01":].copy()
 
 model = RandomForestClassifier(n_estimators=100, min_samples_split=100, random_state=1)
 
@@ -106,7 +114,7 @@ for horizon in horizons:
     sp500[ratio_column] = sp500["Close"] / rolling_averages["Close"]
 
     trend_column = f"Trend_{horizon}"
-    sp500[ratio_column] = sp500.shift(1).rolling(horizon).sum()
+    sp500[trend_column] = sp500.shift(1).rolling(horizon).sum()["Target"]
 
     new_predictors += [ratio_column, trend_column]
 
@@ -119,9 +127,9 @@ print(sp500)
 
 model = RandomForestClassifier(n_estimators=200, min_samples_split=50, random_state=1)
 
-def predict(train, test, model, predictors):
+def predict(train, test, predictors, model):
     model.fit(train[predictors], train["Target"])
-    preds = model.predict_proba(test[predictors])[:, 1]
+    preds = model.predict_proba(test[predictors])[:,1]
     # reduces number of days price goes up increases chance of going up as well
     preds[preds >= .6] = 1
     preds[preds < .6] = 0
@@ -140,6 +148,5 @@ print(counts2)
 
 pScore2 = precision_score(predictions["Target"], predictions["Predictions"])
 print("Pscore 2")
-print(pScore)
-
+print(pScore2)
 
